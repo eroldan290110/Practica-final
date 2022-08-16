@@ -1,0 +1,54 @@
+version: "2.2"
+
+networks:
+  finalnet:
+    driver: bridge
+services:
+  finalnet-apidotnet:
+    image: api-social-net:1.0.0
+    container_name: api-dot
+    restart: always
+    environment:
+      ASPNETCORE_Produccion: 'true'
+      ASPNETCORE_ENVIRONMENT: Development
+    volumes:
+      - "/etc/timezone:/etc/timezone:ro" 
+      - "/etc/localtime:/etc/localtime:ro"
+    ports:
+      - '81:80'
+      - '7257:80'
+    networks:
+      - finalnet
+
+  finalnet-front-end:
+    image: final-front:1.0.0
+    container_name: final-front-end
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - '.:/app'
+      - '/app/node_modules'
+    ports:
+      - 3001:3000
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    networks:
+      - finalnet
+  
+  prometheus:
+    image: ubuntu/prometheus
+    container_name: dev_prometheus_test
+    ports:
+      - "30090:9090"
+    environment:
+      - TZ=Europe/Copenhagen
+    volumes:
+      - ./prom/prometheus.yml:/etc/prometheus/prometheus.yml
+  grafana:
+    image: grafana/grafana
+    container_name: dev_grafana_test
+    ports:
+      - "30091:3000"
+    volumes:
+      - ./grafana-data/data:/var/lib/grafana
